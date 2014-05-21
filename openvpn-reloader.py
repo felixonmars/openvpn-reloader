@@ -40,6 +40,9 @@ def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
         loss = [0] + loss[:-1]
         seq += 1
 
+        if seq > 65535:
+            seq = 0
+
 
 def main():
     arg_parser = ArgumentParser(description="OpenVPN Auto Reloader")
