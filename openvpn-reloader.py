@@ -1,28 +1,15 @@
 #!/usr/bin/env python
-from __future__ import unicode_literals, print_function
+from __future__ import print_function
 import struct
 import sys
 import socket
-from sh import kill
+from os import kill, sysconf
+import signal
 from time import sleep
 from argparse import ArgumentParser
 
-try:
-    import cython
-    limits = cython.inline("""
-cdef extern from "limits.h":
-    cdef int SHRT_MAX
-    cdef int SHRT_MIN
+shrt_max, shrt_min = sysconf('SC_SHRT_MAX'), sysconf('SC_SHRT_MIN')
 
-return SHRT_MAX, SHRT_MIN
-""")
-
-    shrt_max, shrt_min = limits
-    print("Limits found:", shrt_min, shrt_max)
-
-except:
-    print("Failed to acquire limits, using default (0 32767)")
-    shrt_max, shrt_min = 32767, 0
 
 class PacketLossException(Exception):
     pass
@@ -41,10 +28,10 @@ def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
         try:
             packet, peer = s.recvfrom(1024)
         except socket.timeout:
-            sys.stdout.write("?")
+            sys.stdout.write(b"?")
             loss[0] = 1
         else:
-            sys.stdout.write(".")
+            sys.stdout.write(b".")
 
         sys.stdout.flush()
 
@@ -65,6 +52,7 @@ def main():
 
     arg_parser.add_argument(
         'PID',
+        type=int,
         help="OpenVPN PID to send SIGUSR1")
 
     arg_parser.add_argument(
@@ -103,7 +91,7 @@ def main():
             monitor(options.destination, options.max_loss_rate / 100.0, options.timeout, options.interval, options.n)
         except PacketLossException:
             print("Reloading", options.PID)
-            kill("-USR1", options.PID)
+            kill(options.PID, signal.SIGUSR1)
             sleep(5)
 
 if __name__ == "__main__":
