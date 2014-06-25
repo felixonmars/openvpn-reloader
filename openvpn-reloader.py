@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from collections import deque
 import struct
 import sys
 import socket
@@ -16,7 +17,7 @@ class PacketLossException(Exception):
 
 
 def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
-    loss = [0] * n
+    loss = deque(maxlen=n)
     seq = shrt_min
 
     while True:
@@ -29,9 +30,10 @@ def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
             packet, peer = s.recvfrom(1024)
         except socket.timeout:
             sys.stdout.write("?")
-            loss[0] = 1
+            loss.append(1)
         else:
             sys.stdout.write(".")
+            loss.append(0)
 
         sys.stdout.flush()
 
@@ -39,8 +41,6 @@ def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
             raise PacketLossException
 
         sleep(interval)
-
-        loss = [0] + loss[:-1]
         seq += 1
 
         if seq > shrt_max:
