@@ -7,6 +7,21 @@ from sh import kill
 from time import sleep
 from argparse import ArgumentParser
 
+try:
+    import cython
+    limits = cython.inline("""
+cdef extern from "limits.h":
+    cdef int SHRT_MAX
+    cdef int SHRT_MIN
+
+return SHRT_MAX, SHRT_MIN
+""")
+
+    shrt_max, shrt_min = limits
+
+except:
+    print("Failed to acquire limits, using default (0, 32767)")
+    shrt_max, shrt_min = 32767, 0
 
 class PacketLossException(Exception):
     pass
@@ -14,7 +29,7 @@ class PacketLossException(Exception):
 
 def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
     loss = [0] * n
-    seq = 1
+    seq = shrt_min
 
     while True:
         header = struct.pack(b'bbHHh', 8, 0, 0, 0, seq)
@@ -40,8 +55,8 @@ def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
         loss = [0] + loss[:-1]
         seq += 1
 
-        if seq > 65535:
-            seq = 0
+        if seq > shrt_max:
+            seq = shrt_min
 
 
 def main():
