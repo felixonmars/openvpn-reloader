@@ -18,9 +18,10 @@ return SHRT_MAX, SHRT_MIN
 """)
 
     shrt_max, shrt_min = limits
+    print("Limits found:", shrt_min, shrt_max)
 
 except:
-    print("Failed to acquire limits, using default (0, 32767)")
+    print("Failed to acquire limits, using default (0 32767)")
     shrt_max, shrt_min = 32767, 0
 
 class PacketLossException(Exception):
