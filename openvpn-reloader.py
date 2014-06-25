@@ -28,10 +28,10 @@ def monitor(destination, max_loss_rate=0.5, timeout=.5, interval=.2, n=30):
         try:
             packet, peer = s.recvfrom(1024)
         except socket.timeout:
-            sys.stdout.write(b"?")
+            sys.stdout.write("?")
             loss[0] = 1
         else:
-            sys.stdout.write(b".")
+            sys.stdout.write(".")
 
         sys.stdout.flush()
 
